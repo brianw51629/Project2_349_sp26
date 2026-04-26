@@ -1,4 +1,5 @@
 #include "algorithms.h"
+#include <climits>
 
 // -----------------------------------------------------------------------------
 // Helper: determine whether a portion of the sequence contains duplicates
@@ -10,13 +11,10 @@
 // 4. Otherwise, this portion is distinct.
 // -----------------------------------------------------------------------------
 bool all_distinct(const std::vector<int>& A, int left, int right) {
-    // TODO: move through the subarray from left to right
-
-    // TODO: compare each value to the previous one
-
-    // TODO: return false if a duplicate is found
-
-    // TODO: return true if no duplicates are found
+    for (int i = left + 1; i <= right; i++) {
+        if (A[i] == A[i - 1]) return false;
+    }
+    return true;
 }
 
 // -----------------------------------------------------------------------------
@@ -29,11 +27,12 @@ bool all_distinct(const std::vector<int>& A, int left, int right) {
 // 4. Return that missing value.
 // -----------------------------------------------------------------------------
 int find_missing_linear(const std::vector<int>& A) {
-    // TODO: examine each adjacent pair of values
-
-    // TODO: detect where the sorted consecutive pattern breaks
-
-    // TODO: return the missing value between those two elements
+    for (int i = 0; i + 1 < static_cast<int>(A.size()); i++) {
+        if (A[i + 1] - A[i] > 1) {
+            return A[i] + 1;
+        }
+    }
+    return INT_MIN;
 }
 
 // -----------------------------------------------------------------------------
@@ -48,17 +47,16 @@ int find_missing_linear(const std::vector<int>& A) {
 // 6. When only one position remains, determine the missing value from that spot.
 // -----------------------------------------------------------------------------
 int binary_missing_distinct(const std::vector<int>& A, int left, int right) {
-    // TODO: prepare any information needed to tell whether the pattern is still correct
-
-    // TODO: repeat while more than one position remains
-
-    // TODO: compute the middle position
-
-    // TODO: compare the middle value against what should appear there
-
-    // TODO: keep only the half that could still contain the missing value
-
-    // TODO: return the missing value once the search range is narrowed down
+    int expected = A[left] - left;
+    while (left < right) {
+        int mid = left + (right - left) / 2;
+        if (A[mid] == expected + mid) {
+            left = mid + 1;
+        } else {
+            right = mid;
+        }
+    }
+    return A[left] - 1;
 }
 
 // -----------------------------------------------------------------------------
@@ -74,20 +72,30 @@ int binary_missing_distinct(const std::vector<int>& A, int left, int right) {
 // 6. If needed, recursively search the right part.
 // -----------------------------------------------------------------------------
 int general_missing_recursive(const std::vector<int>& A, int left, int right) {
-    // TODO: handle an empty or invalid subproblem
+        if (left >= right) {
+            return INT_MIN;
+        }
 
-    // TODO: handle a very small subproblem directly
+        if (all_distinct(A, left, right)) {
+            if (A[right] - A[left] > right - left) {
+                return binary_missing_distinct(A, left, right);
+            }
+            return INT_MIN;
+        }
 
-    // TODO: switch to the binary-search-based method if this portion is distinct
+        int mid = left + (right - left) / 2;
 
-    // TODO: split the current portion around the middle
+        int result = general_missing_recursive(A, left, mid);
+        if (result != INT_MIN) {
+            return result;
+        }
 
-    // TODO: recursively search the left half
+        if (A[mid + 1] - A[mid] > 1) {
+            return A[mid] + 1;
+        }
 
-    // TODO: check whether the missing value lies between the two halves
-
-    // TODO: recursively search the right half if necessary
-}
+        return general_missing_recursive(A, mid + 1, right);
+    }
 
 // -----------------------------------------------------------------------------
 // Public wrapper for Part 2
@@ -96,7 +104,7 @@ int general_missing_recursive(const std::vector<int>& A, int left, int right) {
 // 1. Run the distinct-elements algorithm on the entire sequence.
 // -----------------------------------------------------------------------------
 int find_missing_distinct(const std::vector<int>& A) {
-    // TODO: call the binary-search-based helper on the full array
+        return binary_missing_distinct(A, 0, static_cast<int>(A.size()) - 1);
 }
 
 // -----------------------------------------------------------------------------
@@ -106,7 +114,7 @@ int find_missing_distinct(const std::vector<int>& A) {
 // 1. Run the general divide-and-conquer algorithm on the entire sequence.
 // -----------------------------------------------------------------------------
 int find_missing_general(const std::vector<int>& A) {
-    // TODO: call the general recursive helper on the full array
+    return general_missing_recursive(A, 0, static_cast<int>(A.size()) - 1);
 }
 
 // -----------------------------------------------------------------------------
@@ -118,9 +126,8 @@ int find_missing_general(const std::vector<int>& A) {
 // 3. Otherwise, use the general divide-and-conquer algorithm.
 // -----------------------------------------------------------------------------
 int find_missing_element(const std::vector<int>& A) {
-    // TODO: decide whether the full sequence is distinct
-
-    // TODO: use the distinct-elements algorithm when it is safe
-
-    // TODO: otherwise use the general divide-and-conquer algorithm
+    if (all_distinct(A, 0, static_cast<int>(A.size()) - 1)) {
+        return find_missing_distinct(A);
+    }
+    return find_missing_general(A);
 }
